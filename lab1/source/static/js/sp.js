@@ -3,6 +3,13 @@
   Author: Kahin Akram Hassan
 */
 
+/*
+Completed by Ola Karlsson Jan 25 2018
+Using code samples from
+https://github.com/kristin-henry-sf/d3_experiments/tree/master/scatterPlotResponsive_d3v4
+
+*/
+
 function sp(data){
 
     this.data = data;
@@ -56,29 +63,37 @@ function sp(data){
 
 
         /* ~~ Task 4 Add the scatter dots. ~~ */
-        var circles = svg.selectAll(".dot")
-        .data(data)
-        .enter().append("circle")
-        .attr("class", "dot")
-        .attr("class", "non_brushed")
-        .attr("r", function(d){ return r(d[circleSize]); })//Circles got to big so, scaling them down
-        .attr("cx", function(d) { return x(d[xValue]); })
-        .attr("cy", function(d) { return y(d[yValue]); })
-        .style("fill", function(d) { return color(d[colourValue]); });
+        var circles = drawChart(data);
 
 
         /* ~~ Task 5 create the brush variable and call highlightBrushedCircles() ~~ */
-
-        var brush = d3.brush()
-        .on("brush", highlightBrushedCircles);
-
-        svg.append("g")
-            .call(brush);
+        addBrush();
 
 
-            drawLegend(data);
+       //Added legend showing the colour and which colour is which country
+        drawLegend(data);
 
 
+        function addBrush() {
+            var brush = d3.brush()
+            .on("brush", highlightBrushedCircles);
+    
+            svg.append("g")
+                .call(brush);
+        }
+
+
+        function drawChart(data) {
+            return svg.selectAll(".dot")
+            .data(data)
+            .enter().append("circle")
+            .attr("class", "dot")
+            .attr("class", "non_brushed")
+            .attr("r", function(d){ return r(d[circleSize]); })
+            .attr("cx", function(d) { return x(d[xValue]); })
+            .attr("cy", function(d) { return y(d[yValue]); })
+            .style("fill", function(d) { return color(d[colourValue]); });
+        }
 
         //Function to draw the axises
         function drawAxises(){
