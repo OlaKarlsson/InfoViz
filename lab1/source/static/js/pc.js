@@ -40,11 +40,21 @@ function pc(data){
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   /* ~~ Task 6 Scale the x axis ~~*/
+  //https://github.com/d3/d3-scale/blob/master/README.md#scaleBand
+  //ScaleBand creates a new band scale with empty domain
+  // no padding, no rounding, center alignment, unit range[0,1]
+  var x = d3.scaleBand()
+  .domain(dimensions.map(function (d) { return d.name; }))
+  //Domain set the boundries, .map on the dimensions, runs it once for each in the array
+  .range([0, width]);
+  //.range starts the x axis at 0 and stops it at the with of the container
+
 
 
   /* ~~ Task 7 Add the x axes ~~*/
   var axes = svg.selectAll(".axes");
   // add code here..
+  
 
 
 
