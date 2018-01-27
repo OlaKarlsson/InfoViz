@@ -51,19 +51,16 @@ function pc(data){
 
 
 
-  /* ~~ Task 7 Add the x axes ~~*/
-  var axes = svg.selectAll(".axes");
-  // add code here..
-
-  axes.data(dimensions)
+//  /* ~~ Task 7 Add the x axes ~~*/
+  var axes = svg.selectAll(".axes")
+  .data(dimensions)//Feed in the data from dimensions
   .enter()
-  .append("g")
-  .attr("class", "dimension")
+  .append("g").attr("class", "dimension")
   .attr("transform", function (d) { 
-    return "translate(" + x(d.name) + ")"; });
+    return "translate(" + x(d.name) + ")"; });;
+//Set up the axes
 
-
-
+//add the text/numbers
   axes.append("g")
     .attr("class", "axis")
     .each(function(d) { d3.select(this).call(yAxis.scale(d.scale)); })
@@ -87,7 +84,7 @@ function pc(data){
 
     });
 
-    console.log(cc);
+    // console.log(cc);
 
 
     var background = svg.append("g")
@@ -95,16 +92,16 @@ function pc(data){
        .selectAll("path")
        .data(data)
        .enter().append("path")
-       .attr("d", draw); // Uncomment when x axis is implemented
+       .attr("d", draw);
 
     var foreground = svg.append("g")
        .attr("class", "foreground")
        .selectAll("path")
        .data(data)
        .enter().append("path")
-       .attr("d", draw) // Uncomment when x axis is implemented
+       .attr("d", draw) 
        .style("stroke", function (d) {
-         return cc[d["Country"]];
+         return cc[d["Country"]];//Get the colour by using the country-name as key
        })
 
        //Add color here
@@ -115,9 +112,14 @@ function pc(data){
     /* ~~ Task 9 Add and store a brush for each axis. ~~*/
     axes.append("g")
         .attr("class", "brush")
-
         /* ~~ Add brush here */
-
+        .each(function (d) {
+          d3.select(this).call(d.brush = d3.brushY()
+              .extent([[-10, 0], [10, height]])
+              .on("start", brushstart)
+              .on("brush", brush)
+              .on("end", brush))
+        })
         .selectAll("rect")
         .attr("x", -10)
         .attr("width", 20);
