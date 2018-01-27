@@ -45,33 +45,49 @@ function pc(data){
   // no padding, no rounding, center alignment, unit range[0,1]
   var x = d3.scaleBand()
   .domain(dimensions.map(function (d) { return d.name; }))
-  //Domain set the boundries, .map on the dimensions, runs it once for each in the array
+  //Domain set the input boundries, .map on the dimensions, runs it once for each in the array
   .range([0, width]);
-  //.range starts the x axis at 0 and stops it at the with of the container
+  //.range sets the output range and starts the x axis at 0 and stops it at the with of the container
 
 
 
   /* ~~ Task 7 Add the x axes ~~*/
   var axes = svg.selectAll(".axes");
   // add code here..
-  
+
+  axes.data(dimensions)
+  .enter()
+  .append("g")
+  .attr("class", "dimension")
+  .attr("transform", function (d) { 
+    return "translate(" + x(d.name) + ")"; });
 
 
 
-        axes.append("g")
-          .attr("class", "axis")
-          .each(function(d) { d3.select(this).call(yAxis.scale(d.scale)); })
-          .append("text")
-          .attr("class", "title")
-          .style('fill','black')
-          .style('font-size','9px')
-          .attr("text-anchor", "middle")
-          .attr("y", -9)
-          .text(function(d) { return d.name; });
+  axes.append("g")
+    .attr("class", "axis")
+    .each(function(d) { d3.select(this).call(yAxis.scale(d.scale)); })
+    .append("text")
+    .attr("class", "title")
+    .style('fill','black')
+    .style('font-size','9px')
+    .attr("text-anchor", "middle")
+    .attr("y", -9)
+    .text(function(d) { return d.name; });
 
 
+    var d3Colors = d3.scaleOrdinal(d3.schemeCategory20);
     //Task 8 initialize color scale
-    var cc = [];
+    var cc = []; 
+
+   data.forEach(function (d) { 
+    //  console.log("From data: "+d["Country"]);
+    //  console.log("From color: "+ d3Colors(d["Country"])); 
+      cc[d["Country"]] = d3Colors(d["Country"]); //Fill the array with country names and their associated colours
+
+    });
+
+    console.log(cc);
 
 
     var background = svg.append("g")
@@ -79,16 +95,22 @@ function pc(data){
        .selectAll("path")
        .data(data)
        .enter().append("path")
-       //.attr("d", draw); // Uncomment when x axis is implemented
+       .attr("d", draw); // Uncomment when x axis is implemented
 
     var foreground = svg.append("g")
        .attr("class", "foreground")
        .selectAll("path")
        .data(data)
        .enter().append("path")
-       //.attr("d", draw) // Uncomment when x axis is implemented
+       .attr("d", draw) // Uncomment when x axis is implemented
+       .style("stroke", function (d) {
+         return cc[d["Country"]];
+       })
 
        //Add color here
+
+
+
 
     /* ~~ Task 9 Add and store a brush for each axis. ~~*/
     axes.append("g")
