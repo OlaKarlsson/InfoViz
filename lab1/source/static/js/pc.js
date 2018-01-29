@@ -1,6 +1,8 @@
 /*
   Created: Jan 14 2018
   Author: Kahin Akram Hassan
+  Completed by Ola Karlsson
+  27/1-2018
 */
 function pc(data){
 
