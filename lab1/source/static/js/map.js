@@ -64,11 +64,10 @@ function map(data, world_map_json){
 
   
     country.enter().insert("path")
-        .attr("class", "country")
-  .attr("class", "country-map")
+        .attr("class", "country country-map")
           /*~~ Task 11  add path variable as attr d here. ~~*/
         .attr("d", path)
-        .attr("id", function(d) { return d.id; })
+        .attr("id", function(d) { return d.properties.name.toLowerCase().replace(/ /g, "-"); })
         .attr("title", function(d) { return d.properties.name; })
         .style("fill", function(d) { return cc[d.properties.name]; })
   
@@ -95,6 +94,9 @@ function map(data, world_map_json){
         //selection
         .on("click",  function(d) {
             /*~~ call the other graphs method for selection here ~~*/
+        
+            sp.selectDots(d);
+        
         });
   
     function move() {
@@ -103,8 +105,21 @@ function map(data, world_map_json){
     }
   
       /*~~ Highlight countries when filtering in the other graphs~~*/
-    this.selectCountry = function(value){
-  
+    this.selectCountry = function(collection){
+      //  console.log(collection);
+       // d3.select(this).style('stroke','white');
+
+       collection.forEach(function(item){
+           console.log(item.Country);
+
+           //The names where added as IDn on the map countries
+           //Then I here loop and  
+            d3.select("#"+item.Country.toLowerCase().replace(/ /g, "-")).style("fill","blue");
+
+        
+       })
+
+       
     }
   
   }  

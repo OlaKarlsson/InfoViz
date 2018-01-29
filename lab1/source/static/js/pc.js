@@ -87,8 +87,7 @@ function pc(data){
     });
 
     // console.log(cc);
-
-
+    //Add color here
     var background = svg.append("g")
        .attr("class", "background")
        .selectAll("path")
@@ -106,8 +105,7 @@ function pc(data){
          return cc[d["Country"]];//Get the colour by using the country-name as key
        })
 
-       //Add color here
-
+      
 
 
 
@@ -207,6 +205,7 @@ function pc(data){
 
         if(w){
             /* ~~ Call the other graphs functions to highlight the brushed.~~*/
+            sp.selectDots(w);
         }
 
         return w;
