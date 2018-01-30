@@ -7,6 +7,8 @@ function map(data, world_map_json){
 
     this.data = data;
     this.world_map_json = world_map_json;
+
+    this.selectedCountry = "";
   
     var div = '#world-map';
     var parentWidth = $(div).parent().width();
@@ -34,7 +36,7 @@ function map(data, world_map_json){
     // .translate([width/2, height/2]);
     .center([100, 10])
     .scale(100);
-    //Instructions said 120 but then Australia couldn't be seen 
+    //Instructions said other numbers but found that to show as much as possible these were better 
 
     var path = d3.geoPath()
     .projection(merceratorProjection);
@@ -43,7 +45,15 @@ function map(data, world_map_json){
     var svg = d3.select(div).append("svg")
         .attr("width", width)
         .attr("height", height)
-        .call(zoom);
+        .call(zoom)
+        .on("click", function(d){
+            //Check if a country has been selected, if so clear the selection
+            if (this.selectedCountry !== "") {
+                //Call reset on Scatterplot
+                sp.reset();
+                this.selectedCountry = "";
+            }
+        });
   
     var g = svg.append("g");
   
@@ -51,7 +61,7 @@ function map(data, world_map_json){
     var countries = topojson.feature(world_map_json,
           world_map_json.objects.countries).features;
   
-    console.log(countries);
+    //console.log(countries);
     var country = g.selectAll(".country")
     .data(countries);
   
@@ -73,7 +83,7 @@ function map(data, world_map_json){
   
         //tooltip
         .on("mousemove", function(d) {
-          d3.select(this).style('stroke','white');
+          d3.select(this).style('stroke','blue');
   
           tooltip.transition()
               .duration(200)
@@ -85,7 +95,7 @@ function map(data, world_map_json){
         })
         .on("mouseout",  function(d) {
   
-            d3.select(this).style('stroke','none');
+            d3.select(this).style('stroke','#CCC');
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
@@ -94,8 +104,14 @@ function map(data, world_map_json){
         //selection
         .on("click",  function(d) {
             /*~~ call the other graphs method for selection here ~~*/
-        
-            sp.selectDots(d);
+
+            //Stop the clik event from bubbling up to parent
+            d3.event.stopPropagation();
+            console.log(d);
+            //Set a 
+            selectedCountry = d;
+            //Call the selectDots on the Scattterplot
+            sp.selectDots(d);           
         
         });
   
@@ -110,7 +126,7 @@ function map(data, world_map_json){
        // d3.select(this).style('stroke','white');
 
        collection.forEach(function(item){
-           console.log(item.Country);
+          // console.log(item.Country);
 
            //The names where added as IDn on the map countries
            //Then I here loop and  

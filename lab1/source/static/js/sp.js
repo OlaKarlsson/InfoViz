@@ -13,10 +13,10 @@ https://github.com/kristin-henry-sf/d3_experiments/tree/master/scatterPlotRespon
 function sp(data){
 
     this.data = data;
-    var div = '#scatter-plot';
+    var scatterDiv = '#scatter-plot';
 
     var height = 500;
-    var parentWidth = $(div).parent().width();
+    var parentWidth = $(scatterDiv).parent().width();
     var legendWidth = 100;
     var margin = {top: 20, right: 20, bottom: 60, left: 40},
         width = parentWidth - margin.right - margin.left - legendWidth,
@@ -24,13 +24,21 @@ function sp(data){
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
-    var tooltip = d3.select(div).append("div")
+    var tooltip = d3.select(scatterDiv).append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
 
     var x = d3.scaleLinear().range([0, width]);
     var y = d3.scaleLinear().range([height, 0]);
     var r = d3.scaleLinear().range([0, 10]);//Set scaling for circle radius 
+
+    //Creating an object to more easily pass around the scales
+    var scales = {
+        xScale: x,
+        yScale: y,
+        rScale: r
+    }
+
 
     /* Task 2
       Initialize 4 (x,y,country,circle-size)
@@ -51,14 +59,14 @@ function sp(data){
     r.domain(d3.extent(data, function (d) { return d[circleSize]; }));//Set min and max for radius of circles
 
 
-    var svg = d3.select(div).append("svg")
+    var svg = d3.select(scatterDiv).append("svg")
         .attr("width", width + margin.left + margin.right + legendWidth)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
         /* ~~ Task 3 Add the x and y Axis and title  ~~ */
-        drawAxises();
+        drawAxises(scales, xAxisLabel, yAxisLabel);
        
 
 
@@ -97,12 +105,12 @@ function sp(data){
         }
 
         //Function to draw the axises
-        function drawAxises(){
+        function drawAxises(theScales, xLabel, yLabel){
 
             svg.append("g")
             .attr('id', 'x_axis')
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x))
+            .call(d3.axisBottom(theScales.xScale))
 
           svg.append("text")
             .attr('id', 'xlabel')
@@ -110,19 +118,19 @@ function sp(data){
                   'translate(' + width + ' ,' +
                   (height  -6) + ')') 
             .style('text-anchor', 'end')
-            .text(xAxisLabel)
+            .text(xLabel)
             
       
           svg.append("g")
             .attr('id', 'y_axis')
-            .call(d3.axisLeft(y))
+            .call(d3.axisLeft(theScales.yScale))
 
           svg.append("text")
             .attr('id', 'ylabel')
             .attr('y', 9)
             .attr("transform", "rotate(-90)")//Rotate it to make it fit by the line
             .style("text-anchor", "end")
-            .text(yAxisLabel);
+            .text(yLabel);
 
         }
 
@@ -184,24 +192,43 @@ function sp(data){
          }//isBrushed
 
 
+         this.reset = function(){
+            svg.selectAll(".dot").remove();
+            drawAxises(scales, xAxisLabel, yAxisLabel);
+            drawChart(this.data);
+         }
 
          //Select all the dots filtered
          this.selectDots = function(value){
+            
+            //Clear previous dots
+            svg.selectAll(".dot").remove();
+
             console.log(value);
-           
-            var dots = d3.selectAll(".dot")
-            .style("stroke", function (d) {
-               // console.log(d);
-                if( Object.prototype.toString.call( value ) === '[object Array]' ) {
-                    console.log("Array");
-                }else{
-                    //If it's not an array it's coming from a click on the map
-                    //console.log("Not Array");
-                    if (d.Country.toLowerCase().replace(/ /g, "-") === value.properties.name.toLowerCase().replace(/ /g, "-") ) {
-                        return "#8e1b54";
-                    }
-                }
+            var selectedCountries = data.filter(function(d){
+                return d.Country === value.properties.name;
             });
+
+            console.log(selectedCountries);
+
+            drawChart(selectedCountries);
+
+
+          
+           
+            // var dots = d3.selectAll(".dot")
+            // .style("stroke", function (d) {
+            //    // console.log(d);
+            //     if( Object.prototype.toString.call( value ) === '[object Array]' ) {
+            //         console.log("Array");
+            //     }else{
+            //         //If it's not an array it's coming from a click on the map
+            //         //console.log("Not Array");
+            //         if (d.Country.toLowerCase().replace(/ /g, "-") === value.properties.name.toLowerCase().replace(/ /g, "-") ) {
+            //             return "#8e1b54";
+            //         }
+            //     }
+            // });
          };
 
 
