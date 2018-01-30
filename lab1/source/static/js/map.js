@@ -8,7 +8,7 @@ function map(data, world_map_json){
     this.data = data;
     this.world_map_json = world_map_json;
 
-    this.selectedCountry = "";
+    var selectedCountry = "";
   
     var div = '#world-map';
     var parentWidth = $(div).parent().width();
@@ -47,9 +47,12 @@ function map(data, world_map_json){
         .attr("height", height)
         .call(zoom)
         .on("click", function(d){
+            console.log("Selected Country");
+            console.log(selectedCountry);
             //Check if a country has been selected, if so clear the selection
-            if (this.selectedCountry !== "") {
-                this.selectedCountry = "";
+            if (selectedCountry !== "") {
+                selectedCountry = "";
+
                 //Call reset on Scatterplot
                 sp.reset();                
             }
@@ -58,7 +61,7 @@ function map(data, world_map_json){
     var g = svg.append("g");
   
   
-    var countriesData = topojson.feature(world_map_json,
+    var countries = topojson.feature(world_map_json,
           world_map_json.objects.countries).features;
   
  /*~~ Task 12  initialize color array ~~*/
@@ -67,62 +70,53 @@ function map(data, world_map_json){
         cc[d["Country"]] = d3Colors(d["Country"]); 
     });
 
-    drawChart(countriesData);
-   
+    //console.log(countries);
+    var country = g.selectAll(".country")
+    .data(countries)
+    .enter().insert("path")
+        .attr("class", "country country-map")
+          /*~~ Task 11  add path variable as attr d here. ~~*/
+        .attr("d", path)
+        .attr("id", function(d) { return d.properties.name.toLowerCase().replace(/ /g, "-"); })
+        .attr("title", function(d) { return d.properties.name; })
+        .style("fill", function(d) { return cc[d.properties.name]; })
+  
+        //tooltip
+        .on("mousemove", function(d) {
+          d3.select(this).style('stroke','blue');
+  
+          tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+          var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
+          tooltip
+          .attr("style", "left:"+(mouse[0]+30)+"px;top:"+(mouse[1]+30)+"px")
+          .html(d.properties.name);
+        })
+        .on("mouseout",  function(d) {
+  
+            d3.select(this).style('stroke','#CCC');
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+        })//selection
+        .on("click",  function(d) {
+            /*~~ call the other graphs method for selection here ~~*/
+
+            //Stop the clik event from bubbling up to parent
+            d3.event.stopPropagation();
+            //Set a 
+            selectedCountry = d;
+            console.log(selectedCountry);
+            //Call the selectDots on the Scattterplot
+            sp.selectDots(d);           
+        
+        });
   
     function move() {
         g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
         g.attr("transform", d3.event.transform);
     }
-
-
-    function drawChart(data){
-        svg.selectAll(".dot").remove();
-        
-        var country = g.selectAll(".country")
-        .data(data)
-        .enter().insert("path")
-            .attr("class", "country country-map")
-              /*~~ Task 11  add path variable as attr d here. ~~*/
-            .attr("d", path)
-            .attr("id", function(d) { return d.properties.name.toLowerCase().replace(/ /g, "-"); })
-            .attr("title", function(d) { return d.properties.name; })
-            .style("fill", function(d) { return cc[d.properties.name]; })
-      
-            //tooltip
-            .on("mousemove", function(d) {
-              d3.select(this).style('stroke','blue');
-      
-              tooltip.transition()
-                  .duration(200)
-                  .style("opacity", .9);
-              var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
-              tooltip
-              .attr("style", "left:"+(mouse[0]+30)+"px;top:"+(mouse[1]+30)+"px")
-              .html(d.properties.name);
-            })
-            .on("mouseout",  function(d) {
-      
-                d3.select(this).style('stroke','#CCC');
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            })//selection
-            .on("click",  function(d) {
-                /*~~ call the other graphs method for selection here ~~*/
-    
-                //Stop the clik event from bubbling up to parent
-                d3.event.stopPropagation();
-                console.log(d);
-                //Set a 
-                selectedCountry = d;
-                //Call the selectDots on the Scattterplot
-                sp.selectDots(d);           
-            
-            });
-    }
-
-
   
       /*~~ Highlight countries when filtering in the other graphs~~*/
     this.selectCountry = function(collection){

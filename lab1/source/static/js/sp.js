@@ -93,7 +93,7 @@ function sp(data){
 
 
         function drawChart(data) {
-            console.log(data);
+            //console.log(data);
             return svg.selectAll(".dot")
             .data(data)
             .enter().append("circle")
