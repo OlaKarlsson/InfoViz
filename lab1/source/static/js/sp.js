@@ -14,6 +14,7 @@ function sp(data){
 
     this.data = data;
     var scatterDiv = '#scatter-plot';
+    var brush;
 
     var height = 500;
     var parentWidth = $(scatterDiv).parent().width();
@@ -63,7 +64,12 @@ function sp(data){
         .attr("width", width + margin.left + margin.right + legendWidth)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+        .on("click", function(d){
+            console.log("clicked");
+            clearBrushedEffect();
+            map.reset();
+        });
 
         /* ~~ Task 3 Add the x and y Axis and title  ~~ */
         drawAxises(scales, xAxisLabel, yAxisLabel);
@@ -84,10 +90,11 @@ function sp(data){
 
 
         function addBrush() {
-            var brush = d3.brush()
+            brush = d3.brush()
             .on("brush", highlightBrushedCircles);
     
             svg.append("g")
+               .attr("class", ".brush")
                 .call(brush);
         }
 
@@ -158,12 +165,16 @@ function sp(data){
         //         .text(function(d) { return d; });
         //   }
 
-
+function clearBrushedEffect(){
+    circles.attr("class", "non_brushed");
+}
 
 
          //highlightBrushedCircles function
          function highlightBrushedCircles() {
+             
              if (d3.event.selection != null) {
+                // console.log("in highlightBrushedCircles");
                  // revert circles to initial style
                  circles.attr("class", "non_brushed");
                  var brush_coords = d3.brushSelection(this);
@@ -176,10 +187,8 @@ function sp(data){
                   .attr("class", "brushed");
                    var d_brushed =  d3.selectAll(".brushed").data();
 
-
                    /* ~~~ Call pc or/and map function to filter ~~~ */
                    map.selectCountry(d_brushed);
-
              }
          }//highlightBrushedCircles
 
@@ -193,25 +202,31 @@ function sp(data){
 
 
          this.reset = function(){
-            this.clearDots();
+            clearDots();
             drawAxises(scales, xAxisLabel, yAxisLabel);
             drawChart(this.data);
          }
 
-         this.clearDots= function(){
+         function clearDots(){
             svg.selectAll(".dot").remove();
          }
 
+        //  function clearBrush(){
+        //     svg.select(".selection").call(brush.move, null);
+        //  }
+
          //Select all the dots filtered
          this.selectDots = function(value){
+            //clearBrush();
             //Clear previous dots
-            this.clearDots();
+            clearDots();
             //console.log(value);
             //Create a filtered array based on selection from map
             var selectedCountries = data.filter(function(d){
                 return d.Country === value.properties.name;
             });            
             drawChart(selectedCountries);
+            addBrush();
             //console.log(selectedCountries);
 
 
