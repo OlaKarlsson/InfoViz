@@ -49,9 +49,9 @@ function map(data, world_map_json){
         .on("click", function(d){
             //Check if a country has been selected, if so clear the selection
             if (this.selectedCountry !== "") {
-                //Call reset on Scatterplot
-                sp.reset();
                 this.selectedCountry = "";
+                //Call reset on Scatterplot
+                sp.reset();                
             }
         });
   

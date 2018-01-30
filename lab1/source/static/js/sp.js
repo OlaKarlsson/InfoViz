@@ -107,10 +107,10 @@ function sp(data){
         //Function to draw the axises
         function drawAxises(theScales, xLabel, yLabel){
 
-            svg.append("g")
-            .attr('id', 'x_axis')
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(theScales.xScale))
+        svg.append("g")
+        .attr('id', 'x_axis')
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(theScales.xScale))
 
           svg.append("text")
             .attr('id', 'xlabel')
@@ -193,29 +193,31 @@ function sp(data){
 
 
          this.reset = function(){
-            svg.selectAll(".dot").remove();
+            this.clearDots();
             drawAxises(scales, xAxisLabel, yAxisLabel);
             drawChart(this.data);
          }
 
+         this.clearDots= function(){
+            svg.selectAll(".dot").remove();
+         }
+
          //Select all the dots filtered
          this.selectDots = function(value){
-            
             //Clear previous dots
-            svg.selectAll(".dot").remove();
-
-            console.log(value);
+            this.clearDots();
+            //console.log(value);
+            //Create a filtered array based on selection from map
             var selectedCountries = data.filter(function(d){
                 return d.Country === value.properties.name;
-            });
-
-            console.log(selectedCountries);
-
+            });            
             drawChart(selectedCountries);
+            //console.log(selectedCountries);
+
 
 
           
-           
+           //Initial attempt, showing the selected dots by adding a stroke
             // var dots = d3.selectAll(".dot")
             // .style("stroke", function (d) {
             //    // console.log(d);
