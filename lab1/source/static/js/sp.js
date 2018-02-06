@@ -220,7 +220,7 @@ function clearBrushedEffect(){
             //clearBrush();
             //Clear previous dots
             clearDots();
-            //console.log(value);
+            console.log(value);
             //Create a filtered array based on selection from map
             var selectedCountries = data.filter(function(d){
                 return d.Country === value.properties.name;

@@ -9,6 +9,8 @@ function pc(data){
   this.data = data;
   var div = '#pc-chart';
 
+  var countriesArray = [];
+
 
   var parentWidth = $(div).parent().width();
   var margin = {top: 40, right: 0, bottom: 10, left: 100},
@@ -203,9 +205,13 @@ function pc(data){
       function within(d, extent, dim) {
         var w =  dim.scale(d[dim.name]) >= extent[0]  && dim.scale(d[dim.name]) <= extent[1];
 
+        
         if(w){
             /* ~~ Call the other graphs functions to highlight the brushed.~~*/
-            sp.selectDots(w);
+            // sp.selectDots(w);
+            // countriesArray.push(d);
+            // console.log(countriesArray);
+            // sp.selectDots(countriesArray);
         }
 
         return w;
