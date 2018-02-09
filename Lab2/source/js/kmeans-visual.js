@@ -71,7 +71,7 @@ function normaliseData(csv_input){
 
        for (let dimension in point)
        {
-           normalisedPoint.push(parseFloat(point[dimension]));
+           normalisedPoint[dimension] = parseFloat(point[dimension]);
        }
          normalisedData.push(normalisedPoint);
      }   
@@ -98,23 +98,16 @@ function getDataExtremes(points) {
      for (let i = 0; i < data.length; i++) {
           let point = data[i];
 
-        for (var dimension in point)
-        {
-            if ( ! extremes[dimension] )
-            {
-                extremes[dimension] = {min: 1000, max: 0};
-            }
+          for (let j = 0; j < Object.keys(point).length; j++) {
+              const element = Object.keys(point)[j];
+              extremes[j] = {min: 0, max: 1};
+          }
 
-            if (point[dimension] < extremes[dimension].min)
-            {
-                extremes[dimension].min = point[dimension];
-            }
-
-            if (point[dimension] > extremes[dimension].max)
-            {
-                extremes[dimension].max = point[dimension];
-            }
-        }
+        // for (var dimension in point)
+        // {
+        //     //Hack to get it to work with the labels in our dataset
+        //     extremes[dimension] = {min: 0, max: 1};
+        // }
     }
 
     return extremes;
