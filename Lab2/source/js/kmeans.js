@@ -45,36 +45,14 @@ var iterations = 0;
 var maxIterations;
 var k;
 
-let data1 = "source/data/testData1_400x3_2-clusters.csv";
-let data2 = "source/data/testData2_400x3_2-clusters.csv";
-let data3 = "source/data/testData3_5600x5_x-clusters.csv";
 
-    d3.csv(data1, function(csv_data) {
-      data = normaliseData(csv_data);
-      setup();
-    });
 
- function normaliseData(csv_input){
-     
-     let normalisedData = [];
-     
-      for (let i = 0; i < csv_input.length; i++) {
-          let point = csv_input[i];
-          let normalisedPoint = [];
+// data = normaliseData(data);
+// setup();
 
-        for (let dimension in point)
-        {
-            normalisedPoint.push(parseFloat(point[dimension]));
-           
-        }
-          normalisedData.push(normalisedPoint);
-      }
-          
-          return normalisedData;
-     
- }
 
-function setup() {
+
+this.setup = function() {
 
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
@@ -90,6 +68,24 @@ function setup() {
 
     setTimeout(run, drawDelay);
 }
+
+
+//Clean the datapoints ny parsing them to float
+function normaliseData(csv_input){
+    let normalisedData = [];
+     for (let i = 0; i < csv_input.length; i++) {
+         let point = csv_input[i];
+         let normalisedPoint = [];
+
+       for (let dimension in point)
+       {
+           normalisedPoint.push(parseFloat(point[dimension]));
+       }
+         normalisedData.push(normalisedPoint);
+     }
+    return normalisedData;
+}
+
 
 function getDataRanges(extremes) {
     var ranges = [];
