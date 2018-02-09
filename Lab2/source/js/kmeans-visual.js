@@ -16,7 +16,7 @@ var data = [];
 
 var dataExtremes;
 var dataRange;
-var drawDelay = 2000;
+var drawDelay = 500;
 
 
 var iteration = 0;
@@ -33,36 +33,33 @@ let data2 = "source/data/testData2_400x3_2-clusters.csv";
 let data3 = "source/data/testData3_5600x5_x-clusters.csv";
 
     d3.csv(data1, function(csv_data) {
-      initialise(csv_data);
+      data = normaliseData(csv_data);
+      initialise();
     });
 
 
 
-function initialise(csv_data) {
-
-    //Start with cleaning the data
-    let normalisedData = normaliseData(csv_data);
-
+function initialise() {
     //For visuals
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
-    dataExtremes = getDataExtremes(normalisedData);
+    dataExtremes = getDataExtremes(data);
     dataRange = getDataRanges(dataExtremes);
 
 
     maxIterations = 20;
     k = 2;
-    
 
     //Get initial k-points from random points in dataset
-    kPoints = getInitialKPoints(normalisedData, k);
-    pointIndexesWithCentroidLabels = updateLabelArray(normalisedData);
+    kPoints = getInitialKPoints(data, k);
+    
+    updateLabelArray();
     
     
     
-    draw(normalisedData);
+    draw();
 
-    setTimeout(function(){ run(normalisedData)}, drawDelay);
+    setTimeout(run, drawDelay);
 }
 
 //Clean the datapoints ny parsing them to float
@@ -98,8 +95,8 @@ function getDataExtremes(points) {
     var extremes = [];
     
     
-     for (let i = 0; i < points.length; i++) {
-          let point = points[i];
+     for (let i = 0; i < data.length; i++) {
+          let point = data[i];
 
         for (var dimension in point)
         {
@@ -150,8 +147,7 @@ function getDataExtremes(points) {
 
 // };
 
-function updateLabelArray(data) {
-    let returnArray = [];
+function updateLabelArray() {
 
     for (var i in data)
     {
@@ -173,15 +169,14 @@ function updateLabelArray(data) {
             distances[j] = Math.sqrt(sum);
         }
 
-        returnArray[i] = distances.indexOf( Math.min.apply(null, distances) );
+        pointIndexesWithCentroidLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
     }
 
-    return returnArray;
 }
 
-function moveCentroids(data) {
+function moveCentroids() {
 
-    updateLabelArray(data);
+    updateLabelArray();
 
     var sums = Array( kPoints.length );
     var counts = Array( kPoints.length );
@@ -247,19 +242,19 @@ function moveCentroids(data) {
 
 }
 
-function run(data) {
+function run() {
 
-    var moved = moveCentroids(data);
-    draw(data);
+    var moved = moveCentroids();
+    draw();
 
     if (moved && iteration < maxIterations)
     {
         iteration++;
-        setTimeout(function(){ run(data)}, drawDelay);
+        setTimeout(run, drawDelay);
     }
 
 }
-function draw(data) {
+function draw() {
 
     ctx.clearRect(0,0,width, height);
 
