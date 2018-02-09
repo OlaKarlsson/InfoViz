@@ -59,7 +59,7 @@ function initialise() {
     
     draw();
 
-    setTimeout(run, drawDelay);
+    setTimeout(runKmeans, drawDelay);
 }
 
 //Clean the datapoints ny parsing them to float
@@ -124,29 +124,6 @@ function getDataExtremes(points) {
     
 
 
-// function initMeans(k) {
-
-//     if ( ! k )
-//     {
-//         k = 3;
-//     }
-
-//     while (k--)
-//     {
-//         var mean = [];
-
-//         for (var dimension in dataExtremes)
-//         {
-//             mean[dimension] = dataExtremes[dimension].min + ( Math.random() * dataRange[dimension] );
-//         }
-
-//         kPoints.push(mean);
-//     }
-
-//     return kPoints;
-
-// };
-
 function updateLabelArray() {
 
     for (var i in data)
@@ -171,6 +148,7 @@ function updateLabelArray() {
 
         pointIndexesWithCentroidLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
     }
+
 
 }
 
@@ -242,7 +220,7 @@ function moveCentroids() {
 
 }
 
-function run() {
+function runKmeans() {
 
     var moved = moveCentroids();
     draw();
@@ -250,7 +228,7 @@ function run() {
     if (moved && iteration < maxIterations)
     {
         iteration++;
-        setTimeout(run, drawDelay);
+        setTimeout(runKmeans, drawDelay);
     }
 
 }

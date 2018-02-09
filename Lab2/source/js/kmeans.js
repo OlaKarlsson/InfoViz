@@ -34,41 +34,54 @@ var data = [];
 
 
 
-var means = [];
-var assignments = [];
+
 var dataExtremes;
 var dataRange;
-var drawDelay = 2000;
+var drawDelay = 500;
 
 
-var iterations = 0;
+var iteration = 0;
 var maxIterations;
+
+
+
+var kPoints = [];
+var pointIndexesWithCentroidLabels = [];
 var k;
 
+let data1 = "source/data/testData1_400x3_2-clusters.csv";
+let data2 = "source/data/testData2_400x3_2-clusters.csv";
+let data3 = "source/data/testData3_5600x5_x-clusters.csv";
+
+    d3.csv(data1, function(csv_data) {
+      data = normaliseData(csv_data);
+      initialise();
+    });
 
 
-// data = normaliseData(data);
-// setup();
 
-
-
-this.setup = function() {
-
+function initialise() {
+    //For visuals
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
-
-    maxIterations = 20;
-    k = 3;
     dataExtremes = getDataExtremes(data);
     dataRange = getDataRanges(dataExtremes);
-    means = initMeans(k);
 
-    makeAssignments();
+
+    maxIterations = 20;
+    k = 2;
+
+    //Get initial k-points from random points in dataset
+    kPoints = getInitialKPoints(data, k);
+    
+    updateLabelArray();
+    
+    
+    
     draw();
 
-    setTimeout(run, drawDelay);
+    setTimeout(runKmeans, drawDelay);
 }
-
 
 //Clean the datapoints ny parsing them to float
 function normaliseData(csv_input){
@@ -82,10 +95,9 @@ function normaliseData(csv_input){
            normalisedPoint.push(parseFloat(point[dimension]));
        }
          normalisedData.push(normalisedPoint);
-     }
-    return normalisedData;
+     }   
+   return normalisedData;
 }
-
 
 function getDataRanges(extremes) {
     var ranges = [];
@@ -133,39 +145,16 @@ function getDataExtremes(points) {
     
 
 
-function initMeans(k) {
-
-    if ( ! k )
-    {
-        k = 3;
-    }
-
-    while (k--)
-    {
-        var mean = [];
-
-        for (var dimension in dataExtremes)
-        {
-            mean[dimension] = dataExtremes[dimension].min + ( Math.random() * dataRange[dimension] );
-        }
-
-        means.push(mean);
-    }
-
-    return means;
-
-};
-
-function makeAssignments() {
+function updateLabelArray() {
 
     for (var i in data)
     {
         var point = data[i];
         var distances = [];
 
-        for (var j in means)
+        for (var j in kPoints)
         {
-            var mean = means[j];
+            var mean = kPoints[j];
             var sum = 0;
 
             for (var dimension in point)
@@ -178,34 +167,35 @@ function makeAssignments() {
             distances[j] = Math.sqrt(sum);
         }
 
-        assignments[i] = distances.indexOf( Math.min.apply(null, distances) );
+        pointIndexesWithCentroidLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
     }
+
 
 }
 
-function moveMeans() {
+function moveCentroids() {
 
-    makeAssignments();
+    updateLabelArray();
 
-    var sums = Array( means.length );
-    var counts = Array( means.length );
+    var sums = Array( kPoints.length );
+    var counts = Array( kPoints.length );
     var moved = false;
 
-    for (var j in means)
+    for (var j in kPoints)
     {
         counts[j] = 0;
-        sums[j] = Array( means[j].length );
-        for (var dimension in means[j])
+        sums[j] = Array( kPoints[j].length );
+        for (var dimension in kPoints[j])
         {
             sums[j][dimension] = 0;
         }
     }
 
-    for (var point_index in assignments)
+    for (var point_index in pointIndexesWithCentroidLabels)
     {
-        var mean_index = assignments[point_index];
+        var mean_index = pointIndexesWithCentroidLabels[point_index];
         var point = data[point_index];
-        var mean = means[mean_index];
+        var mean = kPoints[mean_index];
 
         counts[mean_index]++;
 
@@ -220,7 +210,7 @@ function moveMeans() {
         //console.log(counts[mean_index]);
         if ( 0 === counts[mean_index] ) 
         {
-            sums[mean_index] = means[mean_index];
+            sums[mean_index] = kPoints[mean_index];
             console.log("Mean with no points");
             console.log(sums[mean_index]);
 
@@ -237,28 +227,29 @@ function moveMeans() {
         }
     }
 
-    if (means.toString() !== sums.toString())
+    if (kPoints.toString() !== sums.toString())
     {
         moved = true;
     }
 
-    means = sums;
+    kPoints = sums;
     
     console.log(moved);
+    console.log(iteration);
 
     return moved;
 
 }
 
-function run() {
+function runKmeans() {
 
-    var moved = moveMeans();
+    var moved = moveCentroids();
     draw();
 
-    if (moved && iterations < maxIterations)
+    if (moved && iteration < maxIterations)
     {
-        iterations++;
-        setTimeout(run, drawDelay);
+        iteration++;
+        setTimeout(runKmeans, drawDelay);
     }
 
 }
@@ -267,11 +258,11 @@ function draw() {
     ctx.clearRect(0,0,width, height);
 
     ctx.globalAlpha = 1;
-    for (var point_index in assignments)
+    for (var point_index in pointIndexesWithCentroidLabels)
     {
-        var mean_index = assignments[point_index];
+        var mean_index = pointIndexesWithCentroidLabels[point_index];
         var point = data[point_index];
-        var mean = means[mean_index];
+        var mean = kPoints[mean_index];
 
         ctx.save();
 
@@ -311,11 +302,11 @@ function draw() {
         ctx.restore();
     }
 
-    for (var i in means)
+    for (var i in kPoints)
     {
         ctx.save();
 
-        var point = means[i];
+        var point = kPoints[i];
 
         var x = (point[0] - dataExtremes[0].min + 1) * (width / (dataRange[0] + 2) );
         var y = (point[1] - dataExtremes[1].min + 1) * (height / (dataRange[1] + 2) );
@@ -333,7 +324,36 @@ function draw() {
 
 }
 
-//setup();
+
+
+
+    ///Returns k number of points randomly picked
+    function getInitialKPoints(data, k){
+        let kPoints = [];
+        let kPointIndexes =[];
+    
+        //Get k number of random indexes to fetch k-points from
+        while (kPointIndexes.length < k) {
+            //Get random int
+            let randInt = getRandomInt(data.length-1)
+            //Check that the k-point isn't already in the array of k-points
+            if (!kPointIndexes.includes(randInt)) {
+                kPointIndexes.push(randInt);
+            }        
+        }
+        //Get the k-points from the data
+        kPointIndexes.forEach(index => {
+            kPoints.push(data[index]);
+        });
+        return kPoints;
+    }
+
+
+      //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+      function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+      }
+
     
    
 };
