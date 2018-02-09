@@ -26,18 +26,18 @@ function kmeans(data, k) {
  * October 2012
  */
 
-var canvas; 
-var ctx;
-var height = 400;
-var width = 400;
-var data = [];
+// var canvas; 
+// var ctx;
+// var height = 400;
+// var width = 400;
+// var data = [];
 
 
 
 
-var dataExtremes;
-var dataRange;
-var drawDelay = 500;
+// var dataExtremes;
+// var dataRange;
+// var drawDelay = 500;
 
 
 var iteration = 0;
@@ -46,41 +46,36 @@ var maxIterations;
 
 
 var kPoints = [];
-var pointIndexesWithCentroidLabels = [];
+var pointIndexesWithCentroidIndexLabels = [];
 var k;
 
-let data1 = "source/data/testData1_400x3_2-clusters.csv";
-let data2 = "source/data/testData2_400x3_2-clusters.csv";
-let data3 = "source/data/testData3_5600x5_x-clusters.csv";
 
-    d3.csv(data1, function(csv_data) {
-      data = normaliseData(csv_data);
-      initialise();
-    });
-
+initialise();
 
 
 function initialise() {
     //For visuals
-    canvas = document.getElementById('canvas');
-    ctx = canvas.getContext('2d');
-    dataExtremes = getDataExtremes(data);
-    dataRange = getDataRanges(dataExtremes);
+    // canvas = document.getElementById('canvas');
+    // ctx = canvas.getContext('2d');
+    // dataExtremes = getDataExtremes(data);
+    // dataRange = getDataRanges(dataExtremes);
 
 
     maxIterations = 20;
-    k = 2;
+    k = 3;
 
     //Get initial k-points from random points in dataset
     kPoints = getInitialKPoints(data, k);
     
-    updateLabelArray();
-    
-    
-    
-    draw();
+    updatePointIndexesWithCentroidIndexLabels();
 
-    setTimeout(runKmeans, drawDelay);
+    console.log(pointIndexesWithCentroidIndexLabels);
+        
+    
+    
+   // draw();
+
+   // setTimeout(runKmeans, drawDelay);
 }
 
 //Clean the datapoints ny parsing them to float
@@ -98,6 +93,22 @@ function normaliseData(csv_input){
      }   
    return normalisedData;
 }
+
+
+
+function runKmeans() {
+
+    var moved = moveCentroids();
+    // draw();
+
+    if (moved && iteration < maxIterations)
+    {
+        iteration++;
+        setTimeout(runKmeans, drawDelay);
+    }
+
+}
+
 
 function getDataRanges(extremes) {
     var ranges = [];
@@ -145,37 +156,63 @@ function getDataExtremes(points) {
     
 
 
-function updateLabelArray() {
+function updatePointIndexesWithCentroidIndexLabels() {
 
-    for (var i in data)
+    //Loop through all datapoints
+    for (let i in data)
     {
-        var point = data[i];
-        var distances = [];
+        let point = data[i];
+        let distances = [];
 
-        for (var j in kPoints)
+
+        //Loop through centroids
+        for (let j in kPoints)
         {
-            var mean = kPoints[j];
-            var sum = 0;
+            let centroid = kPoints[j];
+            //For each dimenstion in the point, calculate the euclidian distance
+            // for (let dimension in point)
+            // {
+            //     let difference = point[dimension] - centroid[dimension];
+            //     difference *= difference;
+            //     sum += difference;
 
-            for (var dimension in point)
-            {
-                var difference = point[dimension] - mean[dimension];
-                difference *= difference;
-                sum += difference;
-            }
+                
+            // }
 
-            distances[j] = Math.sqrt(sum);
+            //For each dimenstion in the point, calculate the euclidian distance
+            distances[j] = getEuclidianDistance(point, centroid)
+            // distances[j] = Math.sqrt(sum);
         }
 
-        pointIndexesWithCentroidLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
+        //Assign the index of the smallest distance to the associative array
+        pointIndexesWithCentroidIndexLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
     }
 
 
 }
 
+
+ //Code, based on https://github.com/zeke/euclidean-distance
+
+ function getEuclidianDistance(a, b) {
+    return Math.sqrt(distanceSquared(a,b))
+}
+
+function distanceSquared(a, b) {
+    let sum = 0
+    Object.keys(a).forEach(key => {
+        sum += Math.pow(a[key] - b[key], 2)
+    });
+
+    return sum
+  }
+///End code from https://github.com/zeke/euclidean-distance
+
+
 function moveCentroids() {
 
-    updateLabelArray();
+    //Make sure the labels array is up to date
+    updatePointIndexesWithCentroidIndexLabels();
 
     var sums = Array( kPoints.length );
     var counts = Array( kPoints.length );
@@ -191,9 +228,9 @@ function moveCentroids() {
         }
     }
 
-    for (var point_index in pointIndexesWithCentroidLabels)
+    for (var point_index in pointIndexesWithCentroidIndexLabels)
     {
-        var mean_index = pointIndexesWithCentroidLabels[point_index];
+        var mean_index = pointIndexesWithCentroidIndexLabels[point_index];
         var point = data[point_index];
         var mean = kPoints[mean_index];
 
@@ -241,91 +278,6 @@ function moveCentroids() {
 
 }
 
-function runKmeans() {
-
-    var moved = moveCentroids();
-    draw();
-
-    if (moved && iteration < maxIterations)
-    {
-        iteration++;
-        setTimeout(runKmeans, drawDelay);
-    }
-
-}
-function draw() {
-
-    ctx.clearRect(0,0,width, height);
-
-    ctx.globalAlpha = 1;
-    for (var point_index in pointIndexesWithCentroidLabels)
-    {
-        var mean_index = pointIndexesWithCentroidLabels[point_index];
-        var point = data[point_index];
-        var mean = kPoints[mean_index];
-
-        ctx.save();
-
-        ctx.strokeStyle = 'blue';
-        ctx.beginPath();
-        ctx.moveTo(
-            (point[0] - dataExtremes[0].min + 1) * (width / (dataRange[0] + 2) ),
-            (point[1] - dataExtremes[1].min + 1) * (height / (dataRange[1] + 2) )
-        );
-        ctx.lineTo(
-            (mean[0] - dataExtremes[0].min + 1) * (width / (dataRange[0] + 2) ),
-            (mean[1] - dataExtremes[1].min + 1) * (height / (dataRange[1] + 2) )
-        );
-        ctx.stroke();
-        ctx.closePath();
-    
-        ctx.restore();
-    }
-    ctx.globalAlpha = 0.3;
-
-    for (var i in data)
-    {
-        ctx.save();
-
-        var point = data[i];
-
-        var x = (point[0] - dataExtremes[0].min + 1) * (width / (dataRange[0] + 2) );
-        var y = (point[1] - dataExtremes[1].min + 1) * (height / (dataRange[1] + 2) );
-
-        ctx.strokeStyle = '#CCC';
-        ctx.translate(x, y);
-        ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, Math.PI*2, true);
-        ctx.stroke();
-        ctx.closePath();
-
-        ctx.restore();
-    }
-
-    for (var i in kPoints)
-    {
-        ctx.save();
-
-        var point = kPoints[i];
-
-        var x = (point[0] - dataExtremes[0].min + 1) * (width / (dataRange[0] + 2) );
-        var y = (point[1] - dataExtremes[1].min + 1) * (height / (dataRange[1] + 2) );
-
-        ctx.fillStyle = 'green';
-        ctx.translate(x, y);
-        ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, Math.PI*2, true);
-        ctx.fill();
-        ctx.closePath();
-
-        ctx.restore();
-
-    }
-
-}
-
-
-
 
     ///Returns k number of points randomly picked
     function getInitialKPoints(data, k){
@@ -355,6 +307,7 @@ function draw() {
       }
 
     
+      
    
 };
 
