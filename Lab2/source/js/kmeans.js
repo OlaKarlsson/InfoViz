@@ -26,66 +26,51 @@ function kmeans(data, k) {
  * October 2012
  */
 
-// var canvas; 
-// var ctx;
-// var height = 400;
-// var width = 400;
-// var data = [];
-
-
-
-
-// var dataExtremes;
-// var dataRange;
-// var drawDelay = 500;
 
 
 var iteration = 1;
 var maxIterations;
 
 
-
 var kPoints = [];
 var pointIndexesWithCentroidIndexLabels = [];
 var k;
+var distances = [];
+var quality = 0;
+var previousClusterDistance = Number.MAX_SAFE_INTEGER;
+
 
 
 initialise();
 runKmeans();
+var result = {
+    assignments: pointIndexesWithCentroidIndexLabels
+};
+return result;
 
 
 function initialise() {
-    //For visuals
-    // canvas = document.getElementById('canvas');
-    // ctx = canvas.getContext('2d');
-    // dataExtremes = getDataExtremes(data);
-    // dataRange = getDataRanges(dataExtremes);
-
-
+  
     maxIterations = 20;
 
     //Get initial k-points from random points in dataset
     kPoints = getInitialKPoints(data, k);
     
     updatePointIndexesWithCentroidIndexLabels();
-
-    console.log(pointIndexesWithCentroidIndexLabels);
-        
     
-    
-   // draw();
-
-   // setTimeout(runKmeans, drawDelay);
 }
 
 
 function runKmeans() {
 
     var moved = moveCentroids();
-    // draw();
+    
+//End up with 0 because calling it in the wrong place, same as why it claimes it only moves two times
+    let quality = checkQuality();
 
     console.log(moved);
     console.log(iteration);
+    console.log(pointIndexesWithCentroidIndexLabels);
 
 
     if (moved && iteration < maxIterations)
@@ -99,7 +84,7 @@ function runKmeans() {
 }
 
 
-//Clean the datapoints ny parsing them to float
+//Clean the datapoints by parsing them to float
 function normaliseData(csv_input){
     let normalisedData = [];
      for (let i = 0; i < csv_input.length; i++) {
@@ -116,29 +101,38 @@ function normaliseData(csv_input){
 }
 
 
-var sse = {};
-for (let i = 0; k < kPoints.length; k++) {
-    const element = kPoints[k];
-    
-    sse[k]=0;
-
-}
-
 
 
 function checkQuality() {
-    //array with quality for the clusters
-    var sse = [];
-    for (let k = 0; k < kPoints.length; k++) {
-        const element = kPoints[k];      
 
+   var summedClusterDistance = 0;
+   for (let k = 0; k < kPoints.length; k++) {
+    
 
-        //For each cluster, get mean
-//for each datapoint in each cluster, += Math.pow(datapoint-mean, 2)
+        for (let j = 0; j < data.length; j++) {
+             let dataPoint = data[j];
+             let clusterIndex = pointIndexesWithCentroidIndexLabels[j];
+             let closestCentroid = data[clusterIndex];
+             
+             summedClusterDistance += getEuclidianDistance(closestCentroid,dataPoint);
+                          
+        }       
+       
+   }
 
+   let quality = previousClusterDistance - summedClusterDistance;
+
+    if (previousClusterDistance > summedClusterDistance) {
+        previousClusterDistance = summedClusterDistance;
+    }
+
+   
+   return quality;
+
+  
+        
     }
     
-}
 
 
 
@@ -157,22 +151,13 @@ function updatePointIndexesWithCentroidIndexLabels() {
         {
             let centroid = kPoints[j];
             //For each dimenstion in the point, calculate the euclidian distance
-            // for (let dimension in point)
-            // {
-            //     let difference = point[dimension] - centroid[dimension];
-            //     difference *= difference;
-            //     sum += difference;
-
-                
-            // }
-
-            //For each dimenstion in the point, calculate the euclidian distance
             distances[j] = getEuclidianDistance(point, centroid)
-            // distances[j] = Math.sqrt(sum);
         }
 
+        let indexOfClosestCentroid = distances.indexOf( Math.min.apply(null, distances) )
         //Assign the index of the smallest distance to the associative array
-        pointIndexesWithCentroidIndexLabels[i] = distances.indexOf( Math.min.apply(null, distances) );
+        pointIndexesWithCentroidIndexLabels[i] = indexOfClosestCentroid;
+        
     }
 
 
@@ -197,9 +182,6 @@ function distanceSquared(a, b) {
 
 
 function moveCentroids() {
-
-    //Make sure the labels array is up to date
-   // updatePointIndexesWithCentroidIndexLabels();
 
     var summed_dimensions = Array( kPoints.length );
     var counts = Array( kPoints.length );
@@ -236,26 +218,6 @@ function moveCentroids() {
 
     for (var centroid_index in summed_dimensions)
     {
-        console.log(counts[centroid_index]);
-        if ( 0 === counts[centroid_index] ) 
-        {
-            summed_dimensions[centroid_index] = kPoints[centroid_index];
-            console.log("Mean with no points");
-            console.log(summed_dimensions[centroid_index]);
-
-            // for (var dimension in dataExtremes)
-            // {
-            //     sums[mean_index][dimension] = 0 + ( Math.random() * dataRange[dimension] );
-            // }
-            continue;
-        }
-
-        // for (let i = 0; i < datapointsInCluster[0].length; i++) {
-        //     const value = d3.mean(datapointsInCluster, function(d) { return d[i]; })
-        //     meanPoint.push(value);
-        // }
-
-
         for (var dimension in summed_dimensions[centroid_index])
         {
             summed_dimensions[centroid_index][dimension] /= counts[centroid_index];
