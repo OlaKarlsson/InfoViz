@@ -34,15 +34,18 @@ var maxIterations;
 
 var kPoints = [];
 var pointIndexesWithCentroidIndexLabels = [];
-var k;
-var distances = [];
 var quality = 0;
-var previousClusterDistance = Number.MAX_SAFE_INTEGER;
+var previousClusterDistance;
 
 
 
 initialise();
-runKmeans();
+
+//quality > 0.0015
+while (iteration < maxIterations) {
+    runKmeans();
+}
+
 var result = {
     assignments: pointIndexesWithCentroidIndexLabels
 };
@@ -51,35 +54,31 @@ return result;
 
 function initialise() {
   
+    previousClusterDistance = Number.MAX_SAFE_INTEGER;
     maxIterations = 20;
 
     //Get initial k-points from random points in dataset
     kPoints = getInitialKPoints(data, k);
     
-    updatePointIndexesWithCentroidIndexLabels();
+    console.log("initialise");
+    console.log(kPoints);
+    
+    
     
 }
 
 
 function runKmeans() {
-
-    var moved = moveCentroids();
+    console.log("runKmeans");
+    
+    updatePointIndexesWithCentroidIndexLabels();
+    moveCentroids();
     
 //End up with 0 because calling it in the wrong place, same as why it claimes it only moves two times
-    let quality = checkQuality();
+    quality = checkQuality();
 
-    console.log(moved);
-    console.log(iteration);
-    console.log(pointIndexesWithCentroidIndexLabels);
+    iteration++;
 
-
-    if (moved && iteration < maxIterations)
-    {
-        console.log("Run again");
-        
-        iteration++;
-        runKmeans();
-    }
 
 }
 
@@ -104,33 +103,30 @@ function normaliseData(csv_input){
 
 
 function checkQuality() {
-
-   var summedClusterDistance = 0;
-   for (let k = 0; k < kPoints.length; k++) {
-    
-
-        for (let j = 0; j < data.length; j++) {
-             let dataPoint = data[j];
-             let clusterIndex = pointIndexesWithCentroidIndexLabels[j];
-             let closestCentroid = data[clusterIndex];
-             
-             summedClusterDistance += getEuclidianDistance(closestCentroid,dataPoint);
-                          
-        }       
-       
-   }
-
-   let quality = previousClusterDistance - summedClusterDistance;
-
-    if (previousClusterDistance > summedClusterDistance) {
-        previousClusterDistance = summedClusterDistance;
-    }
-
-   
-   return quality;
-
-  
+        console.log("checkQuality " + iteration);
         
+        var summedClusterDistance = 0;
+        for (let k = 0; k < kPoints.length; k++) {
+
+                for (let j = 0; j < data.length; j++) {
+                    let dataPoint = data[j];
+                    let clusterIndex = pointIndexesWithCentroidIndexLabels[j];
+                    let closestCentroid = data[clusterIndex];
+                    
+                    summedClusterDistance += getEuclidianDistance(closestCentroid,dataPoint);
+                                
+                } 
+        }
+
+        let quality = previousClusterDistance - summedClusterDistance;
+
+            if (previousClusterDistance > summedClusterDistance) {
+                previousClusterDistance = summedClusterDistance;
+            }
+
+        console.log(kPoints);
+        
+        return quality;
     }
     
 
@@ -138,6 +134,8 @@ function checkQuality() {
 
 
 function updatePointIndexesWithCentroidIndexLabels() {
+    console.log("updatePointIndexesWithCentroidIndexLabels " + iteration);
+    //console.log(kPoints);
 
     //Loop through all datapoints
     for (let i in data)
@@ -160,6 +158,7 @@ function updatePointIndexesWithCentroidIndexLabels() {
         
     }
 
+    console.log(kPoints);
 
 }
 
@@ -175,65 +174,143 @@ function distanceSquared(a, b) {
     Object.keys(a).forEach(key => {
         sum += Math.pow(a[key] - b[key], 2)
     });
-
     return sum
   }
 ///End code from https://github.com/zeke/euclidean-distance
 
 
-function moveCentroids() {
+// function moveCentroids() {
+// console.log("moveCentroids");
 
-    var summed_dimensions = Array( kPoints.length );
-    var counts = Array( kPoints.length );
-    var moved = false;
+// updatePointIndexesWithCentroidIndexLabels();
 
-    //For each kpoint/cluster
-    for (var j in kPoints)
-    {
+//     var summed_dimensions = Array( kPoints.length );
+//     var counts = Array( kPoints.length );
+//     var moved = false;
+
+//     //For each kpoint/cluster
+//     for (var j in kPoints)
+//     {
         
-        //instanciate the counts array with zeros, one for each kpoint
-        counts[j] = 0;
-        summed_dimensions[j] = Array( Object.keys(kPoints[j]).length );
-        for (var dimension in kPoints[j])
+//         //instanciate the counts array with zeros, one for each kpoint
+//         counts[j] = 0;
+//         summed_dimensions[j] = Array( Object.keys(kPoints[j]).length );
+//         for (var dimension in kPoints[j])
+//         {
+//             //instanciate the the dimensions of the sum array with zeros
+//             summed_dimensions[j][dimension] = 0;
+//         }
+//     }
+
+//     //For each element in the array with indexes of points and the cluster the belong to
+//     for (var point_index in pointIndexesWithCentroidIndexLabels)
+//     {
+//         var centroid_index = pointIndexesWithCentroidIndexLabels[point_index];
+//         var point = data[point_index];
+//         var centroid = kPoints[centroid_index];
+
+//         counts[centroid_index]++;
+
+//         for (var dimension in centroid)
+//         {
+//             summed_dimensions[centroid_index][dimension] += point[dimension];
+//         }
+//     }
+
+//     for (var centroid_index in summed_dimensions)
+//     {
+//         for (var dimension in summed_dimensions[centroid_index])
+//         {
+//             summed_dimensions[centroid_index][dimension] /= counts[centroid_index];
+//         }
+//     }
+
+//     if (kPoints.toString() !== summed_dimensions.toString())
+//     {
+//         moved = true;
+//     }
+
+//     kPoints = summed_dimensions;
+
+//     return moved;
+
+// }
+
+function moveCentroids() {
+    console.log("moveCentroids " + iteration);
+
+
+//    var sums = Array( kPoints.length );
+    var sumsOfPoints = [];
+    
+    var pointsPerCentroid = Array( kPoints.length );
+
+    for (let centroidIndex in kPoints)
+    {
+        pointsPerCentroid[centroidIndex] = 0;
+        sumsOfPoints[centroidIndex] = {};
+        for (var dimension in kPoints[centroidIndex])
         {
-            //instanciate the the dimensions of the sum array with zeros
-            summed_dimensions[j][dimension] = 0;
+            sumsOfPoints[centroidIndex][dimension] = 0;
         }
     }
 
-    //For each element in the array with indexes of points and the cluster the belong to
     for (var point_index in pointIndexesWithCentroidIndexLabels)
     {
         var centroid_index = pointIndexesWithCentroidIndexLabels[point_index];
         var point = data[point_index];
-        var centroid = kPoints[centroid_index];
+        var mean = kPoints[centroid_index];
 
-        counts[centroid_index]++;
+        pointsPerCentroid[centroid_index]++;
 
-        for (var dimension in centroid)
+        for (var dimension in mean)
         {
-            summed_dimensions[centroid_index][dimension] += point[dimension];
+            sumsOfPoints[centroid_index][dimension] += point[dimension];
         }
     }
 
-    for (var centroid_index in summed_dimensions)
+    for (let i in sumsOfPoints)
     {
-        for (var dimension in summed_dimensions[centroid_index])
+        console.log(pointsPerCentroid[i]);
+        if ( 0 === pointsPerCentroid[i] ) 
         {
-            summed_dimensions[centroid_index][dimension] /= counts[centroid_index];
+            sumsOfPoints[i] = kPoints[i];
+            console.log("Mean with no points");
+            console.log(sumsOfPoints[i]);
+
+            continue;
+        }
+
+        //Calculate the average for each dimension
+        for (var dimension in sumsOfPoints[i])
+        {
+            let floatNumber = parseFloat(sumsOfPoints[i][dimension]);
+            let myCount = pointsPerCentroid[i];
+            let avg = floatNumber/myCount;
+            sumsOfPoints[i][dimension] = avg;
         }
     }
 
-    if (kPoints.toString() !== summed_dimensions.toString())
-    {
-        moved = true;
-    }
 
-    kPoints = summed_dimensions;
+////REMOVE as the quality should decide
+//Also can't compare as the arrays are not the same, the kPoints are an array of objects
+    // if (JSON.stringify(kPoints) !== JSON.stringify(sums))
+    // {
+    //     moved = true;
+    // }
+    
+    
+    kPoints = sumsOfPoints;
+    //https://stackoverflow.com/questions/597588/how-do-you-clone-an-array-of-objects-in-javascript
 
-    return moved;
+    
+    // console.log(moved);
+    console.log("Moved centroids to: ");
+    console.log(kPoints);
 
 }
+
+
 
 
 ///Returns k number of points randomly picked
